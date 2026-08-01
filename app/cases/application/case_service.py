@@ -21,6 +21,9 @@ class CaseService:
     def list_pending(self) -> list[Case]:
         return self._repository.list_by_status(CaseStatus.PENDING_REVIEW)
 
+    def get_latest_for_elder(self, elder_id: int) -> Case | None:
+        return self._repository.get_latest_by_elder(elder_id)
+
     async def approve(self, case_id: int) -> Case:
         if not self._repository.get(case_id):
             raise ValueError(f"Case {case_id} not found")

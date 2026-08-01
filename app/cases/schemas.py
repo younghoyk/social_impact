@@ -16,6 +16,13 @@ class CaseReject(BaseModel):
     reason: str
 
 
+class CaseSimpleStatus(BaseModel):
+    """시민용 상태 조회 응답 -- 정책명/서류초안/거부사유는 담당자 화면(/cases/pending) 전용이라 뺐다."""
+
+    stage: str
+    decision_ready: bool
+
+
 class CaseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

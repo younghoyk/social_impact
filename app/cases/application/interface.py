@@ -11,6 +11,10 @@ class CaseServiceInterface(Protocol):
 
     def list_pending(self) -> list[Case]: ...
 
+    def get_latest_for_elder(self, elder_id: int) -> Case | None:
+        """시민용 상태 조회(/cases/status)에서 사용 -- 정책명/서류초안/거부사유는 노출하지 않는다."""
+        ...
+
     async def approve(self, case_id: int) -> Case:
         """승인 처리 후 CASE_APPROVED 이벤트 발행 (calls 도메인이 구독해 콜백 발신)."""
         ...

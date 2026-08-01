@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.cases.domain import Case, CaseStatus
@@ -27,6 +27,11 @@ class SQLAlchemyCaseRepository:
         stmt = select(CaseORM).where(CaseORM.status == status)
         rows = self._db.scalars(stmt).all()
         return [self._to_entity(row) for row in rows]
+
+    def get_latest_by_elder(self, elder_id: int) -> Case | None:
+        stmt = select(CaseORM).where(CaseORM.elder_id == elder_id).order_by(desc(CaseORM.created_at)).limit(1)
+        row = self._db.scalar(stmt)
+        return self._to_entity(row) if row else None
 
     def mark_approved(self, case_id: int) -> Case:
         row = self._db.get(CaseORM, case_id)
