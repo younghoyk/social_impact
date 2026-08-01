@@ -9,3 +9,5 @@ langgraph
 langchain-openai
 twilio
 cryptography
+httpx
+beautifulsoup4

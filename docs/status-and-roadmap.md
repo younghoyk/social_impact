@@ -15,10 +15,13 @@
 - `WelfarePolicy`에 자격요건 필드(`min_age`, `max_income_percentile`, `required_vulnerability_types` 등)는 추가했지만, `intake/agent`는 여전히 **pgvector 순수 의미검색만** 함 — 규칙 기반 필터링 미적용
 - `application_template`(지자체 공식 양식) 필드도 DB엔 있지만, 서류 초안 생성(`intake/agent/nodes.py`의 `draft_application`)은 여전히 **LLM 자유생성** — 템플릿을 실제로 채워넣는 로직 없음
 
-### 1-3. 데이터 부재
-- `welfare_policies` 테이블 — 스키마만 있고 **실제 제도 데이터 0건** (제목/내용/자격요건/양식 전부 비어있음)
-- `elders` 테이블 — `seed/elders_sample.csv`로 가상 데이터 8건 존재, **아직 실제 DB에 로드 안 함** (`scripts/seed_elders.py` 실행 필요)
-- `WelfarePolicy` 생성/수정 API 자체가 없음 (조회용 검색만 있고, 넣는 방법은 직접 SQL 또는 스크립트뿐)
+### 1-3. 데이터
+- `elders` 테이블 — `seed/elders_sample.csv` 8건 실제 DB에 적재 완료 (`scripts/seed_elders.py`)
+- `welfare_policies` 테이블 — **여전히 0건.** 수집 파이프라인(`app/intake/collector/`)은 만들어서 실제 사이트로 검증까지 했지만, 아직 저장된 진짜 공고는 없음:
+  - 목록 fetch → 키워드 필터 → 상세 fetch → LLM 구조화 추출까지 end-to-end 동작 확인 (강남구/강남구보건소 대상)
+  - LLM이 "노인" 키워드만 걸린 무관한 행정공고(위탁의료기관 지정, 채용공고 등)를 실제 복지혜택 프로그램이 아니라고 정확히 판별 — 의도한 동작이지만 결과적으로 아직 저장된 건 0개
+  - 강동구·영등포구·서민금융진흥원·서울시(워드프레스 계열) 게시판은 후보 링크가 0건으로 나옴 — `html_fetcher.py`의 `_looks_like_detail_link` 휴리스틱이 이지웹 계열 CMS에 맞춰져 있어 다른 CMS 구조엔 안 맞을 가능성 (다음 단계에서 사이트별 조정 필요)
+- `PolicyRepository.save()`는 이제 있음 (수집기가 사용) — 다만 실사용 검증은 안 됨
 
 ### 1-4. 운영/보안
 - **인증/인가 전무** — 모든 API가 인증 없이 열려있음 (`/cases/{id}/approve`, `/elders/{id}` 등 누구나 호출 가능)
@@ -38,7 +41,7 @@
 
 1. **STT/TTS 실연동** (팀원) — Whisper/Clova 어댑터 구현 + 통화 라우터에 실제 오디오 파이프라인 연결
 2. **통화 → intake 트리거 연결** — WebSocket 핸들러에서 STT 완료 시 `IntakeService.process_call()` 자동 호출
-3. **실제 복지 제도 데이터 입력** — `welfare_policies`에 제목/내용/자격요건/공식양식 실데이터 채우기 (팀 작업)
+3. **수집기 커버리지 확대** — 강동구/영등포구/서민금융진흥원/서울시 등 이지웹이 아닌 CMS 구조에 맞게 `html_fetcher.py` 링크 판별 로직 보강, 실제로 정책이 저장되는 것까지 확인
 4. **규칙 필터 + RAG 하이브리드 매칭** — WelfarePolicy 자격요건 필드로 1차 필터링 후 의미검색으로 순위화
 5. **템플릿 기반 서류 생성** — `application_template`의 placeholder를 실제 어르신/케이스 데이터로 채우는 로직으로 전환
 6. **대시보드 거부 UI 추가** — 거부 버튼 + 사유 입력창
