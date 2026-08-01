@@ -70,7 +70,9 @@ def _ask_record_twiml(prompt: str) -> str:
         action=_COLLECT_ACTION,
         method="POST",
         max_length=12,
-        timeout=5,
+        # timeout은 "말 끝난 뒤 무음이 이만큼 지속되면 녹음 종료"라, 5초는 짧은 대답(이름 등)
+        # 뒤에 어색하게 긴 침묵으로 느껴진다.
+        timeout=2,
         play_beep=True,
         trim="trim-silence",
     )
