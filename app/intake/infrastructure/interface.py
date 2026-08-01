@@ -1,6 +1,12 @@
 from typing import Protocol
 
-from app.intake.schemas import EligibilityFilter, MatchedPolicy, WelfarePolicyCreate
+from app.intake.schemas import (
+    EligibilityFilter,
+    MatchedPolicy,
+    PolicyDetailsUpdate,
+    WelfarePolicyCreate,
+    WelfarePolicySummary,
+)
 
 
 class PolicyRepositoryInterface(Protocol):
@@ -20,3 +26,11 @@ class PolicyRepositoryInterface(Protocol):
         ...
 
     def exists_by_program_id(self, program_id: str) -> bool: ...
+
+    def list_all(self) -> list[WelfarePolicySummary]:
+        """관리자용 조사/백필 도구에서 전체 목록 확인용."""
+        ...
+
+    def update_details(self, policy_id: int, data: PolicyDetailsUpdate) -> None:
+        """조사해서 알아낸 값을 기존 정책 레코드에 채워 넣는다. 존재하지 않으면 ValueError."""
+        ...

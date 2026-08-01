@@ -3,7 +3,13 @@ from sqlalchemy import any_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.intake.infrastructure.orm_model import WelfarePolicyORM
-from app.intake.schemas import EligibilityFilter, MatchedPolicy, WelfarePolicyCreate
+from app.intake.schemas import (
+    EligibilityFilter,
+    MatchedPolicy,
+    PolicyDetailsUpdate,
+    WelfarePolicyCreate,
+    WelfarePolicySummary,
+)
 
 
 class PgVectorPolicyRepository:
@@ -88,3 +94,33 @@ class PgVectorPolicyRepository:
         self._db.commit()
         self._db.refresh(row)
         return row.id
+
+    def list_all(self) -> list[WelfarePolicySummary]:
+        rows = self._db.scalars(select(WelfarePolicyORM)).all()
+        return [
+            WelfarePolicySummary(
+                id=row.id,
+                program_id=row.program_id,
+                title=row.title,
+                provider_name=row.provider_name,
+                content=row.content,
+                benefit_amount=row.benefit_amount,
+                application_method=list(row.application_method or []),
+                required_documents=list(row.required_documents or []),
+                contact=row.contact,
+                source_url=row.source_url,
+            )
+            for row in rows
+        ]
+
+    def update_details(self, policy_id: int, data: PolicyDetailsUpdate) -> None:
+        row = self._db.get(WelfarePolicyORM, policy_id)
+        if row is None:
+            raise ValueError(f"Policy {policy_id} not found")
+        if data.benefit_amount is not None:
+            row.benefit_amount = data.benefit_amount
+        if data.application_method is not None:
+            row.application_method = data.application_method
+        if data.required_documents is not None:
+            row.required_documents = data.required_documents
+        self._db.commit()

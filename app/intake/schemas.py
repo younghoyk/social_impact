@@ -43,6 +43,30 @@ class WelfarePolicyCreate(BaseModel):
     last_verified_at: datetime | None = None
 
 
+class WelfarePolicySummary(BaseModel):
+    """관리자용 조사/백필 도구(/intake/policies)에서 쓰는 조회 스키마 -- 지금 뭐가 비어있는지
+    보고, 조사한 값을 채워 넣을 대상을 고르는 용도."""
+
+    id: int
+    program_id: str
+    title: str
+    provider_name: str
+    content: str
+    benefit_amount: str | None
+    application_method: list[str]
+    required_documents: list[str]
+    contact: str | None
+    source_url: str | None
+
+
+class PolicyDetailsUpdate(BaseModel):
+    """조사해서 채워 넣을 필드만 받는다 -- None이면 그 필드는 건드리지 않음."""
+
+    benefit_amount: str | None = None
+    application_method: list[str] | None = None
+    required_documents: list[str] | None = None
+
+
 class MatchedPolicy(BaseModel):
     """벡터 검색으로 찾은 후보 -- 최종 선택(LLM 재랭킹)과 서류 초안 작성이 relevance_snippet
     하나만으로는 부족해서, 자격요건/신청 관련 컬럼을 그대로 실어 나른다."""
