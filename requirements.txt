@@ -8,3 +8,4 @@ openai
 langgraph
 langchain-openai
 twilio
+cryptography

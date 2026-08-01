@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     # Public base URL (ngrok 등으로 노출된 주소, Twilio 콜백용)
     PUBLIC_BASE_URL: str = "http://localhost:8000"
 
+    # 민감정보(주민등록번호, 계좌번호) 암호화 키 — 배포 환경에서는 반드시 별도 발급한 값으로 교체
+    # 생성: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    ENCRYPTION_KEY: str = "Eg11EPkmrEKL4YjZmCesDXiAKzONv4gKGCcSMmMLKWk="
+
 
 @lru_cache
 def get_settings() -> Settings:

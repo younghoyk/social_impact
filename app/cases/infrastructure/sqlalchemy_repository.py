@@ -38,6 +38,17 @@ class SQLAlchemyCaseRepository:
         self._db.refresh(row)
         return self._to_entity(row)
 
+    def mark_rejected(self, case_id: int, reason: str) -> Case:
+        row = self._db.get(CaseORM, case_id)
+        if not row:
+            raise ValueError(f"Case {case_id} not found")
+        row.status = CaseStatus.REJECTED
+        row.rejected_at = datetime.now(timezone.utc)
+        row.rejection_reason = reason
+        self._db.commit()
+        self._db.refresh(row)
+        return self._to_entity(row)
+
     @staticmethod
     def _to_entity(row: CaseORM) -> Case:
         return Case(
@@ -49,4 +60,6 @@ class SQLAlchemyCaseRepository:
             status=row.status,
             created_at=row.created_at,
             approved_at=row.approved_at,
+            rejected_at=row.rejected_at,
+            rejection_reason=row.rejection_reason,
         )

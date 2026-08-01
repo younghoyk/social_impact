@@ -21,3 +21,5 @@ class Case:
     status: CaseStatus
     created_at: datetime
     approved_at: datetime | None
+    rejected_at: datetime | None
+    rejection_reason: str | None

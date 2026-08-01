@@ -12,6 +12,10 @@ class CaseCreate(BaseModel):
     draft_content: str
 
 
+class CaseReject(BaseModel):
+    reason: str
+
+
 class CaseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,3 +27,5 @@ class CaseRead(BaseModel):
     status: CaseStatus
     created_at: datetime
     approved_at: datetime | None
+    rejected_at: datetime | None
+    rejection_reason: str | None

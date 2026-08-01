@@ -25,3 +25,4 @@ event_bus = EventBus()
 
 # 이벤트 이름 상수
 CASE_APPROVED = "case.approved"
+CASE_REJECTED = "case.rejected"

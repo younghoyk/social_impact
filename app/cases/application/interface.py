@@ -14,3 +14,7 @@ class CaseServiceInterface(Protocol):
     async def approve(self, case_id: int) -> Case:
         """승인 처리 후 CASE_APPROVED 이벤트 발행 (calls 도메인이 구독해 콜백 발신)."""
         ...
+
+    async def reject(self, case_id: int, reason: str) -> Case:
+        """거부 처리 후 CASE_REJECTED 이벤트 발행 (calls 도메인이 구독해 콜백 발신)."""
+        ...

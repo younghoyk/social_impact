@@ -16,3 +16,5 @@ class CaseORM(Base):
     status: Mapped[CaseStatus] = mapped_column(Enum(CaseStatus), default=CaseStatus.PENDING_REVIEW)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     approved_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    rejected_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
