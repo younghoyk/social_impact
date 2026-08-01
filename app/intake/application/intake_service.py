@@ -22,6 +22,10 @@ def _eligibility_from_elder(elder: Elder) -> EligibilityFilter:
         income_percentile=elder.income_percentile,
         disability_status=elder.disability_status,
         vulnerability_types=elder.vulnerability_types,
+        full_name=elder.full_name,
+        birth_date=elder.birth_date,
+        phone_number=elder.phone_number,
+        address=elder.address or "",
     )
 
 

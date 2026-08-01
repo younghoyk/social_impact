@@ -67,9 +67,9 @@ class MatchedPolicy(BaseModel):
 
 
 class EligibilityFilter(BaseModel):
-    """어르신 프로필에서 뽑아낸, 매칭에 쓸 자격요건 정보.
-    구조화된 값(age/region_code/...)은 SQL 1차 필터링에, 나머지(household_type 등
-    자유 문자열 필드)는 LLM 재랭킹 단계에서 서술형으로 참고한다."""
+    """어르신 프로필에서 뽑아낸 정보 -- 매칭(자격요건)과 서류 초안 작성(신청인 정보) 둘 다에 쓰인다.
+    구조화된 값(age/region_code/...)은 SQL 1차 필터링에, household_type 등 자유 문자열 필드는
+    LLM 재랭킹 단계에서, 이름/생년월일/연락처/주소는 서류 초안에 신청인 정보로 채워 넣는 데 쓴다."""
 
     age: int | None = None
     region_code: str | None = None
@@ -81,6 +81,12 @@ class EligibilityFilter(BaseModel):
     income_percentile: float | None = None
     disability_status: str | None = None
     vulnerability_types: list[str] = []
+
+    # 서류 초안에 채워 넣을 신청인 정보 (자격요건 필터링에는 안 쓰임)
+    full_name: str = ""
+    birth_date: date | None = None
+    phone_number: str = ""
+    address: str = ""
 
 
 class IntakeResult(BaseModel):

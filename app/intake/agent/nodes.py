@@ -37,9 +37,15 @@ _SELECT_PROMPT = ChatPromptTemplate.from_messages(
 
 _DRAFT_PROMPT = ChatPromptTemplate.from_messages(
     [
-        ("system", "너는 행정 서류 초안을 작성하는 사회복지 공무원 보조 AI야."),
+        (
+            "system",
+            "너는 행정 서류 초안을 작성하는 사회복지 공무원 보조 AI야. "
+            "신청인 정보가 주어지면 반드시 실제 값을 그대로 채워 넣고, "
+            "[이름] 같은 빈칸/플레이스홀더 형태로 남기지 마.",
+        ),
         (
             "user",
+            "신청인 정보:\n{applicant_info}\n\n"
             "어르신 요청 요약: {intent_summary}\n"
             "매칭된 제도: {policy_title}\n"
             "제도 설명: {policy_snippet}\n"
@@ -56,11 +62,13 @@ _TEMPLATE_FILL_PROMPT = ChatPromptTemplate.from_messages(
         (
             "system",
             "너는 지자체 공식 신청서 양식의 빈칸을 채우는 사회복지 공무원 보조 AI야. "
-            "양식의 구조(항목, 순서, 문구)는 그대로 유지하고, 채울 정보가 없는 항목은 "
-            "임의로 지어내지 말고 빈칸으로 남겨둬.",
+            "양식의 구조(항목, 순서, 문구)는 그대로 유지하되, 신청인 정보로 채울 수 있는 항목은 "
+            "반드시 실제 값을 채워 넣고 [이름] 같은 빈칸/플레이스홀더로 남기지 마. "
+            "그 외에 알 수 없는 항목만 빈칸으로 남겨둬 (임의로 지어내지 말 것).",
         ),
         (
             "user",
+            "신청인 정보:\n{applicant_info}\n\n"
             "어르신 요청 요약: {intent_summary}\n"
             "매칭된 제도: {policy_title}\n\n"
             "신청서 양식:\n{template}\n\n"
@@ -136,11 +144,23 @@ def select_policy(
     return candidates[index]
 
 
-def draft_application(intent_summary: str, policy: MatchedPolicy, llm: ChatOpenAI) -> str:
+def _describe_applicant(eligibility: EligibilityFilter) -> str:
+    return (
+        f"이름: {eligibility.full_name or '미상'}\n"
+        f"생년월일: {eligibility.birth_date.isoformat() if eligibility.birth_date else '미상'}\n"
+        f"연락처: {eligibility.phone_number or '미상'}\n"
+        f"주소: {eligibility.address or '미상'}"
+    )
+
+
+def draft_application(intent_summary: str, eligibility: EligibilityFilter, policy: MatchedPolicy, llm: ChatOpenAI) -> str:
+    applicant_info = _describe_applicant(eligibility)
+
     if policy.application_template.strip():
         chain = _TEMPLATE_FILL_PROMPT | llm | StrOutputParser()
         return chain.invoke(
             {
+                "applicant_info": applicant_info,
                 "intent_summary": intent_summary,
                 "policy_title": policy.title,
                 "template": policy.application_template,
@@ -150,6 +170,7 @@ def draft_application(intent_summary: str, policy: MatchedPolicy, llm: ChatOpenA
     chain = _DRAFT_PROMPT | llm | StrOutputParser()
     return chain.invoke(
         {
+            "applicant_info": applicant_info,
             "intent_summary": intent_summary,
             "policy_title": policy.title,
             "policy_snippet": policy.relevance_snippet,

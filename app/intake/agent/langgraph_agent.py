@@ -57,7 +57,9 @@ class LangGraphIntakeAgent:
         return {"matched_policy": policy}
 
     def _draft_node(self, state: IntakeState) -> dict:
-        draft = draft_application(state["intent_summary"], state["matched_policy"], self._llm)
+        draft = draft_application(
+            state["intent_summary"], state["eligibility"], state["matched_policy"], self._llm
+        )
         return {"application_draft": draft}
 
     def run(self, transcript: str, eligibility: EligibilityFilter) -> IntakeResult:
