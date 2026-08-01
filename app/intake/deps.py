@@ -10,6 +10,8 @@ from app.cases.application import CaseServiceInterface
 from app.cases.deps import get_case_service
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
+from app.elders.application import ElderServiceInterface
+from app.elders.deps import get_elder_service
 from app.intake.agent import IntakeAgentInterface, LangGraphIntakeAgent
 from app.intake.application import IntakeService, IntakeServiceInterface
 from app.intake.infrastructure import PgVectorPolicyRepository, PolicyRepositoryInterface
@@ -39,7 +41,8 @@ def get_intake_agent(
 
 def get_intake_service(
     call_service: Annotated[CallServiceInterface, Depends(get_call_service)],
+    elder_service: Annotated[ElderServiceInterface, Depends(get_elder_service)],
     agent: Annotated[IntakeAgentInterface, Depends(get_intake_agent)],
     case_service: Annotated[CaseServiceInterface, Depends(get_case_service)],
 ) -> IntakeServiceInterface:
-    return IntakeService(call_service, agent, case_service)
+    return IntakeService(call_service, elder_service, agent, case_service)

@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,17 @@ class SQLAlchemyElderRepository:
         stmt = select(ElderORM).where(ElderORM.phone_number == phone_number)
         row = self._db.scalar(stmt)
         return self._to_entity(row) if row else None
+
+    def get_by_name_and_birth_date(self, full_name: str, birth_date: date) -> Elder | None:
+        """resident_reg_number가 암호화 저장이라 생년월일로 직접 SQL 필터링은 불가능 --
+        이름으로 후보를 좁힌 뒤 복호화해서 비교한다. 동명이인이 많아지면 느려지겠지만
+        지금 규모(해커톤 seed 데이터)에서는 문제 없음."""
+        stmt = select(ElderORM).where(ElderORM.full_name == full_name)
+        for row in self._db.scalars(stmt):
+            elder = self._to_entity(row)
+            if elder.birth_date == birth_date:
+                return elder
+        return None
 
     def create(self, data: ElderCreate) -> Elder:
         row = ElderORM(

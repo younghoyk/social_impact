@@ -44,9 +44,43 @@ class WelfarePolicyCreate(BaseModel):
 
 
 class MatchedPolicy(BaseModel):
+    """벡터 검색으로 찾은 후보 -- 최종 선택(LLM 재랭킹)과 서류 초안 작성이 relevance_snippet
+    하나만으로는 부족해서, 자격요건/신청 관련 컬럼을 그대로 실어 나른다."""
+
     policy_id: int
     title: str
+    provider_name: str
     relevance_snippet: str
+
+    target_age_min: int | None = None
+    target_age_max: int | None = None
+    income_condition: str | None = None
+    household_conditions: list[str] = []
+    disability_conditions: list[str] = []
+
+    benefit_type: str = ""
+    benefit_amount: str | None = None
+    application_method: list[str] = []
+    required_documents: list[str] = []
+    application_template: str = ""
+    contact: str | None = None
+
+
+class EligibilityFilter(BaseModel):
+    """어르신 프로필에서 뽑아낸, 매칭에 쓸 자격요건 정보.
+    구조화된 값(age/region_code/...)은 SQL 1차 필터링에, 나머지(household_type 등
+    자유 문자열 필드)는 LLM 재랭킹 단계에서 서술형으로 참고한다."""
+
+    age: int | None = None
+    region_code: str | None = None
+    is_basic_livelihood_recipient: bool = False
+    is_veteran: bool = False
+    long_term_care_grade: str | None = None
+
+    household_type: str | None = None
+    income_percentile: float | None = None
+    disability_status: str | None = None
+    vulnerability_types: list[str] = []
 
 
 class IntakeResult(BaseModel):

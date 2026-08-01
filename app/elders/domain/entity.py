@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 
 
 @dataclass
@@ -42,3 +42,38 @@ class Elder:
     data_consent_status: bool
 
     created_at: datetime
+
+    @property
+    def birth_date(self) -> date | None:
+        """주민등록번호 앞 7자리(생년월일+성별코드)로 생년월일을 계산.
+        형식이 예상과 다르면(외국인 등록번호 등) None."""
+        digits = self.resident_reg_number.replace("-", "")
+        if len(digits) < 7 or not digits[:7].isdigit():
+            return None
+
+        century_by_gender_digit = {
+            "1": 1900, "2": 1900, "5": 1900, "6": 1900,
+            "3": 2000, "4": 2000, "7": 2000, "8": 2000,
+        }
+        century = century_by_gender_digit.get(digits[6])
+        if century is None:
+            return None
+
+        birth_year = century + int(digits[0:2])
+        birth_month, birth_day = int(digits[2:4]), int(digits[4:6])
+        try:
+            return date(birth_year, birth_month, birth_day)
+        except ValueError:
+            return None
+
+    @property
+    def age(self) -> int | None:
+        birth_date = self.birth_date
+        if birth_date is None:
+            return None
+
+        today = date.today()
+        age = today.year - birth_date.year
+        if (today.month, today.day) < (birth_date.month, birth_date.day):
+            age -= 1
+        return age

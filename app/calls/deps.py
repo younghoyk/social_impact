@@ -3,8 +3,9 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.calls.adapters.interfaces import TelephonyInterface
+from app.calls.adapters.interfaces import SpeechToTextInterface, TelephonyInterface
 from app.calls.adapters.twilio_telephony import TwilioTelephonyService
+from app.calls.adapters.whisper_stt import WhisperSTTService
 from app.calls.application import CallService, CallServiceInterface
 from app.calls.infrastructure import CallRepositoryInterface, SQLAlchemyCallRepository
 from app.core.config import Settings, get_settings
@@ -21,6 +22,12 @@ def get_telephony_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> TelephonyInterface:
     return TwilioTelephonyService(settings)
+
+
+def get_stt_service(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> SpeechToTextInterface:
+    return WhisperSTTService(settings)
 
 
 def get_call_service(

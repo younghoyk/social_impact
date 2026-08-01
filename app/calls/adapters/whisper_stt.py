@@ -5,11 +5,16 @@ from app.core.config import Settings
 
 
 class WhisperSTTService(SpeechToTextInterface):
-    """TODO(팀원): 실시간 오디오 스트림 청크를 모아 Whisper API에 전달하는 로직 구현.
-    현재는 SpeechToTextInterface 계약만 맞춘 스텁."""
+    """OpenAI Whisper API 연동. calls/presentation/call_router.py가 Twilio Media
+    Streams의 mu-law 오디오를 WAV로 변환해 넘겨준다 (변환 책임은 라우터 쪽)."""
 
     def __init__(self, settings: Settings) -> None:
         self._client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     def transcribe(self, audio_bytes: bytes) -> str:
-        raise NotImplementedError("팀원 STT 파이프라인 연동 예정")
+        transcription = self._client.audio.transcriptions.create(
+            model="whisper-1",
+            file=("audio.wav", audio_bytes, "audio/wav"),
+            language="ko",
+        )
+        return transcription.text.strip()
