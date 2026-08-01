@@ -13,7 +13,11 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings  # noqa: E402
 
 from app.core.config import get_settings  # noqa: E402
 from app.db.session import SessionLocal  # noqa: E402
-from app.intake.collector.pipeline import collect_from_board, collect_wis_seoul_manual  # noqa: E402
+from app.intake.collector.pipeline import (  # noqa: E402
+    collect_from_board,
+    collect_national_manual,
+    collect_wis_seoul_manual,
+)
 from app.intake.collector.site_config import SITE_BOARDS  # noqa: E402
 from app.intake.infrastructure import PgVectorPolicyRepository  # noqa: E402
 
@@ -28,6 +32,13 @@ def main() -> None:
     try:
         print("=== 서울복지포털(wis.seoul.go.kr) 수동 수집 데이터 ===")
         saved = collect_wis_seoul_manual(repository, llm)
+        for title in saved:
+            print(f"  saved: {title}")
+        if not saved:
+            print("  (관련 항목 없음 또는 이미 수집됨)")
+
+        print("=== 중앙정부 노년층 정책 수동 수집 데이터 ===")
+        saved = collect_national_manual(repository, llm)
         for title in saved:
             print(f"  saved: {title}")
         if not saved:

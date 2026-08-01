@@ -7,6 +7,7 @@ from langchain_openai import ChatOpenAI
 
 from app.intake.collector.html_fetcher import fetch_notice_detail, find_keyword_matched_links
 from app.intake.collector.llm_extractor import extract_policy
+from app.intake.collector.national_elderly_manual_data import NATIONAL_ELDERLY_ENTRIES
 from app.intake.collector.site_config import SiteBoard
 from app.intake.collector.wis_seoul_manual_data import WIS_SEOUL_ELDERLY_ENTRIES
 from app.intake.collector.wis_seoul_parser import WIS_SEOUL_URL, fetch_entries
@@ -121,6 +122,59 @@ def collect_wis_seoul_manual(
             budget_until_exhausted=extracted.budget_until_exhausted,
             status=extracted.status,
             source_url=WIS_SEOUL_URL,
+            attachment_urls=[],
+            published_at=None,
+            last_verified_at=datetime.now(timezone.utc),
+        )
+        repository.save(policy)
+        saved_titles.append(policy.title)
+
+    return saved_titles
+
+
+def collect_national_manual(
+    repository: PolicyRepositoryInterface,
+    llm: ChatOpenAI,
+) -> list[str]:
+    """사용자가 정리해서 전달한 2026년 중앙정부 노년층 정책 요약(national_elderly_manual_data.py) 저장.
+    서울시 한정이 아니라 전국 공통이라 provider_type=central, region_codes=[] (전국)."""
+    saved_titles: list[str] = []
+
+    for i, entry in enumerate(NATIONAL_ELDERLY_ENTRIES):
+        program_id = f"national-manual-{i}"
+        if repository.exists_by_program_id(program_id):
+            continue
+
+        raw_text = f"{entry.title}\n{entry.summary}"
+        extracted = extract_policy(raw_text, "", [], llm)
+
+        if not extracted.is_elderly_welfare_program:
+            continue
+
+        policy = WelfarePolicyCreate(
+            program_id=program_id,
+            title=extracted.title or entry.title,
+            provider_type="central",
+            provider_name=extracted.provider_name or "보건복지부",
+            region_codes=[],
+            target_age_min=extracted.target_age_min,
+            target_age_max=extracted.target_age_max,
+            income_condition=extracted.income_condition,
+            household_conditions=extracted.household_conditions,
+            disability_conditions=extracted.disability_conditions,
+            residency_period=extracted.residency_period,
+            benefit_type=extracted.benefit_type,
+            benefit_amount=extracted.benefit_amount,
+            content=extracted.content_summary or entry.summary,
+            application_method=extracted.application_method,
+            required_documents=extracted.required_documents,
+            application_template="",
+            contact=extracted.contact,
+            application_start=extracted.application_start,
+            application_end=extracted.application_end,
+            budget_until_exhausted=extracted.budget_until_exhausted,
+            status=extracted.status,
+            source_url=None,
             attachment_urls=[],
             published_at=None,
             last_verified_at=datetime.now(timezone.utc),
