@@ -33,6 +33,17 @@ chroma_store/
 .idea/
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Logs
 *.log
+
+# 테스트/린트/타입체크 캐시
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Railway CLI 로컬 상태
+.railway/
