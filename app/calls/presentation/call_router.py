@@ -85,6 +85,7 @@ async def collect_turn(
     speech_result = str(form.get("SpeechResult", "")).strip()
 
     session = get_session(call_sid) or start_session(call_sid)
+    logger.info("call %s stage=%s speech_result=%r", call_sid, session.stage, speech_result)
 
     if session.stage == CallStage.ASK_NAME:
         if not speech_result:
@@ -96,11 +97,16 @@ async def collect_turn(
 
     if session.stage == CallStage.ASK_BIRTH_DATE:
         birth_date = _parse_birth_date(speech_result)
+        logger.info("call %s parsed birth_date=%s from %r", call_sid, birth_date, speech_result)
         if birth_date is None:
             prompt = "생년월일을 다시 한 번, 예를 들어 1950년 3월 15일처럼 말씀해 주시겠어요?"
             return PlainTextResponse(_ask_twiml(prompt), media_type="application/xml")
 
         elder = elder_service.get_by_name_and_birth_date(session.name, birth_date)
+        logger.info(
+            "call %s lookup name=%r birth_date=%s -> elder_id=%s",
+            call_sid, session.name, birth_date, elder.id if elder else None,
+        )
         if elder is None:
             clear_session(call_sid)
             message = "죄송합니다, 등록된 정보와 일치하지 않아요. 담당 주민센터로 문의해 주세요."
