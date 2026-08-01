@@ -45,8 +45,10 @@ def _parse_birth_date(text: str) -> date | None:
 
 def _ask_twiml(prompt: str) -> str:
     vr = VoiceResponse()
+    # timeout은 "말을 시작하기까지" 기다리는 시간 -- TTS 프롬프트 직후라 6초는 너무 짧아서
+    # 매번 Gather가 아무것도 못 받고 타임아웃, /calls/collect가 한 번도 안 불리는 원인이었다.
     gather = Gather(
-        input="speech", action=_COLLECT_ACTION, method="POST", language="ko-KR", speech_timeout="auto", timeout=6
+        input="speech", action=_COLLECT_ACTION, method="POST", language="ko-KR", speech_timeout="auto", timeout=10
     )
     gather.say(prompt, language="ko-KR")
     vr.append(gather)
