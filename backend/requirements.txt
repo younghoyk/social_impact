@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+sqlalchemy
+psycopg[binary]
+pgvector
+openai
+langgraph
+twilio
+streamlit
+requests
