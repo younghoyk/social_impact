@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,6 +12,10 @@ from app.db.base import Base
 from app.db.session import engine
 from app.elders.presentation import router as elders_router
 from app.intake.presentation import router as intake_router
+
+# 기본 root logger는 WARNING 이상만 보여줘서, app 코드의 logger.info()가 전부 조용히
+# 씹히고 있었다 (Railway 로그엔 uvicorn 자체 access 로그만 보임) -- 명시적으로 INFO를 켠다.
+logging.basicConfig(level=logging.INFO)
 
 settings = get_settings()
 
