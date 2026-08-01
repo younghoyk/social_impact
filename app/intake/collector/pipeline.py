@@ -8,6 +8,8 @@ from langchain_openai import ChatOpenAI
 from app.intake.collector.html_fetcher import fetch_notice_detail, find_keyword_matched_links
 from app.intake.collector.llm_extractor import extract_policy
 from app.intake.collector.site_config import SiteBoard
+from app.intake.collector.wis_seoul_manual_data import WIS_SEOUL_ELDERLY_ENTRIES
+from app.intake.collector.wis_seoul_parser import WIS_SEOUL_URL, fetch_entries
 from app.intake.infrastructure import PolicyRepositoryInterface
 from app.intake.schemas import WelfarePolicyCreate
 
@@ -67,6 +69,114 @@ def collect_from_board(
             status=extracted.status,
             source_url=candidate.detail_url,
             attachment_urls=detail.attachment_urls,
+            published_at=None,
+            last_verified_at=datetime.now(timezone.utc),
+        )
+        repository.save(policy)
+        saved_titles.append(policy.title)
+
+    return saved_titles
+
+
+def collect_wis_seoul_manual(
+    repository: PolicyRepositoryInterface,
+    llm: ChatOpenAI,
+) -> list[str]:
+    """사용자가 wis.seoul.go.kr 실제 화면을 스크린샷으로 캡처해 전달한 노년 카테고리 항목들
+    (담당부서·전화번호 포함, wis_seoul_manual_data.py) 저장. 상세페이지 fetch 불필요."""
+    saved_titles: list[str] = []
+
+    for i, entry in enumerate(WIS_SEOUL_ELDERLY_ENTRIES):
+        program_id = f"wis-seoul-manual-{i}"
+        if repository.exists_by_program_id(program_id):
+            continue
+
+        raw_text = f"{entry.title}\n{entry.summary}\n담당부서: {entry.department}\n문의전화: {entry.phone}"
+        extracted = extract_policy(raw_text, WIS_SEOUL_URL, [], llm)
+
+        if not extracted.is_elderly_welfare_program:
+            continue
+
+        policy = WelfarePolicyCreate(
+            program_id=program_id,
+            title=extracted.title or entry.title,
+            provider_type="province",
+            provider_name="서울특별시",
+            region_codes=["11"],
+            target_age_min=extracted.target_age_min,
+            target_age_max=extracted.target_age_max,
+            income_condition=extracted.income_condition,
+            household_conditions=extracted.household_conditions,
+            disability_conditions=extracted.disability_conditions,
+            residency_period=extracted.residency_period,
+            benefit_type=extracted.benefit_type,
+            benefit_amount=extracted.benefit_amount,
+            content=extracted.content_summary or entry.summary,
+            application_method=extracted.application_method,
+            required_documents=extracted.required_documents,
+            application_template="",
+            contact=extracted.contact or f"{entry.department} {entry.phone}",
+            application_start=extracted.application_start,
+            application_end=extracted.application_end,
+            budget_until_exhausted=extracted.budget_until_exhausted,
+            status=extracted.status,
+            source_url=WIS_SEOUL_URL,
+            attachment_urls=[],
+            published_at=None,
+            last_verified_at=datetime.now(timezone.utc),
+        )
+        repository.save(policy)
+        saved_titles.append(policy.title)
+
+    return saved_titles
+
+
+def collect_wis_seoul(
+    repository: PolicyRepositoryInterface,
+    llm: ChatOpenAI,
+    category: str = "노년",
+    max_entries: int = 30,
+) -> list[str]:
+    """서울복지포털(wis.seoul.go.kr) 생애주기별 카탈로그 수집. 이미 구조화된 목록이라
+    상세페이지 fetch 없이 제목+요약만으로 LLM 추출."""
+    saved_titles: list[str] = []
+
+    for entry in fetch_entries(category)[:max_entries]:
+        program_id = f"wis-seoul-{entry.service_id}"
+        if repository.exists_by_program_id(program_id):
+            continue
+
+        raw_text = f"{entry.title}\n{entry.summary}"
+        extracted = extract_policy(raw_text, WIS_SEOUL_URL, [], llm)
+
+        if not extracted.is_elderly_welfare_program:
+            continue
+
+        policy = WelfarePolicyCreate(
+            program_id=program_id,
+            title=extracted.title or entry.title,
+            provider_type="province",
+            provider_name="서울특별시",
+            region_codes=["11"],
+            target_age_min=extracted.target_age_min,
+            target_age_max=extracted.target_age_max,
+            income_condition=extracted.income_condition,
+            household_conditions=extracted.household_conditions,
+            disability_conditions=extracted.disability_conditions,
+            residency_period=extracted.residency_period,
+            benefit_type=extracted.benefit_type,
+            benefit_amount=extracted.benefit_amount,
+            content=extracted.content_summary or entry.summary,
+            application_method=extracted.application_method,
+            required_documents=extracted.required_documents,
+            application_template="",
+            contact=extracted.contact,
+            application_start=extracted.application_start,
+            application_end=extracted.application_end,
+            budget_until_exhausted=extracted.budget_until_exhausted,
+            status=extracted.status,
+            source_url=WIS_SEOUL_URL,
+            attachment_urls=[],
             published_at=None,
             last_verified_at=datetime.now(timezone.utc),
         )
