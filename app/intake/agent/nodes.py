@@ -41,7 +41,12 @@ _DRAFT_PROMPT = ChatPromptTemplate.from_messages(
             "system",
             "너는 행정 서류 초안을 작성하는 사회복지 공무원 보조 AI야. "
             "신청인 정보가 주어지면 반드시 실제 값을 그대로 채워 넣고, "
-            "[이름] 같은 빈칸/플레이스홀더 형태로 남기지 마.",
+            "[이름] 같은 빈칸/플레이스홀더 형태로 남기지 마. "
+            "제도 관련 항목(지원 내용/신청 방법/필요 서류)이 '명시 없음'이면 그 항목은 "
+            "'문의처를 통해 확인 필요' 정도로 짧게 한 번만 언급하고, 각 항목마다 "
+            "'상세한 설명이 필요합니다' 같은 말을 반복하지 마. 문의처가 주어지면 "
+            "그 문의처를 안내하고, 없다고 해서 담당자에게 정보를 채워달라고 요청하지 마 "
+            "(이 문서 자체가 담당자에게 가는 문서야).",
         ),
         (
             "user",
@@ -52,6 +57,7 @@ _DRAFT_PROMPT = ChatPromptTemplate.from_messages(
             "지원 내용: {benefit_type} {benefit_amount}\n"
             "신청 방법: {application_method}\n"
             "필요 서류: {required_documents}\n"
+            "문의처: {contact}\n"
             "위 내용을 바탕으로 신청서 초안을 작성해줘.",
         ),
     ]
@@ -178,5 +184,6 @@ def draft_application(intent_summary: str, eligibility: EligibilityFilter, polic
             "benefit_amount": policy.benefit_amount or "명시 없음",
             "application_method": ", ".join(policy.application_method) or "명시 없음",
             "required_documents": ", ".join(policy.required_documents) or "명시 없음",
+            "contact": policy.contact or "명시 없음",
         }
     )
