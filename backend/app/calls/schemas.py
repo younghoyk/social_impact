@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.calls.models import CallDirection
+from app.calls.domain import CallDirection
 
 
 class CallCreate(BaseModel):

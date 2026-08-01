@@ -1,17 +1,17 @@
 from typing import Any
 
 from app.calls.adapters.twilio_telephony import TwilioTelephonyService
-from app.calls.repository import SQLAlchemyCallRepository
-from app.calls.service import CallService
+from app.calls.application import CallService
+from app.calls.infrastructure import SQLAlchemyCallRepository
 from app.core.config import get_settings
-from app.core.events import APPLICATION_APPROVED, event_bus
+from app.core.events import CASE_APPROVED, event_bus
 from app.db.session import SessionLocal
-from app.elders.repository import SQLAlchemyElderRepository
-from app.elders.service import ElderService
+from app.elders.application import ElderService
+from app.elders.infrastructure import SQLAlchemyElderRepository
 
 
-async def _handle_application_approved(payload: dict[str, Any]) -> None:
-    """applications 도메인이 발행한 승인 이벤트를 구독해 콜백 발신 (Step 5)."""
+async def _handle_case_approved(payload: dict[str, Any]) -> None:
+    """cases 도메인이 발행한 승인 이벤트를 구독해 콜백 발신 (Step 5)."""
     settings = get_settings()
     db = SessionLocal()
     try:
@@ -31,4 +31,4 @@ async def _handle_application_approved(payload: dict[str, Any]) -> None:
 
 
 def register_call_event_handlers() -> None:
-    event_bus.subscribe(APPLICATION_APPROVED, _handle_application_approved)
+    event_bus.subscribe(CASE_APPROVED, _handle_case_approved)

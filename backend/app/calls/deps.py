@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.calls.adapters.interfaces import TelephonyInterface
 from app.calls.adapters.twilio_telephony import TwilioTelephonyService
-from app.calls.repository import CallRepositoryInterface, SQLAlchemyCallRepository
-from app.calls.service import CallService, CallServiceInterface
+from app.calls.application import CallService, CallServiceInterface
+from app.calls.infrastructure import CallRepositoryInterface, SQLAlchemyCallRepository
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
+from app.elders.application import ElderServiceInterface
 from app.elders.deps import get_elder_service
-from app.elders.service import ElderServiceInterface
 
 
 def get_call_repository(db: Annotated[Session, Depends(get_db)]) -> CallRepositoryInterface:

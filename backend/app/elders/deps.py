@@ -4,8 +4,8 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.elders.repository import ElderRepositoryInterface, SQLAlchemyElderRepository
-from app.elders.service import ElderService, ElderServiceInterface
+from app.elders.application import ElderService, ElderServiceInterface
+from app.elders.infrastructure import ElderRepositoryInterface, SQLAlchemyElderRepository
 
 
 def get_elder_repository(db: Annotated[Session, Depends(get_db)]) -> ElderRepositoryInterface:

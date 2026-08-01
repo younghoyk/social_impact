@@ -1,43 +1,45 @@
 from typing import Annotated
 
 from fastapi import Depends
-from openai import OpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from sqlalchemy.orm import Session
 
-from app.applications.deps import get_application_service
-from app.applications.service import ApplicationServiceInterface
+from app.calls.application import CallServiceInterface
 from app.calls.deps import get_call_service
-from app.calls.service import CallServiceInterface
+from app.cases.application import CaseServiceInterface
+from app.cases.deps import get_case_service
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
-from app.intake.agent import IntakeAgent
-from app.intake.repository import PgVectorPolicyRepository, PolicyRepositoryInterface
-from app.intake.service import IntakeService, IntakeServiceInterface
+from app.intake.agent import IntakeAgentInterface, LangGraphIntakeAgent
+from app.intake.application import IntakeService, IntakeServiceInterface
+from app.intake.infrastructure import PgVectorPolicyRepository, PolicyRepositoryInterface
 
 
-def get_openai_client(settings: Annotated[Settings, Depends(get_settings)]) -> OpenAI:
-    return OpenAI(api_key=settings.OPENAI_API_KEY)
+def get_chat_model(settings: Annotated[Settings, Depends(get_settings)]) -> ChatOpenAI:
+    return ChatOpenAI(model=settings.LLM_MODEL, api_key=settings.OPENAI_API_KEY)
+
+
+def get_embeddings_model(settings: Annotated[Settings, Depends(get_settings)]) -> OpenAIEmbeddings:
+    return OpenAIEmbeddings(model=settings.EMBEDDING_MODEL, api_key=settings.OPENAI_API_KEY)
 
 
 def get_policy_repository(
     db: Annotated[Session, Depends(get_db)],
-    openai_client: Annotated[OpenAI, Depends(get_openai_client)],
-    settings: Annotated[Settings, Depends(get_settings)],
+    embeddings: Annotated[OpenAIEmbeddings, Depends(get_embeddings_model)],
 ) -> PolicyRepositoryInterface:
-    return PgVectorPolicyRepository(db, openai_client, settings)
+    return PgVectorPolicyRepository(db, embeddings)
 
 
 def get_intake_agent(
     repository: Annotated[PolicyRepositoryInterface, Depends(get_policy_repository)],
-    openai_client: Annotated[OpenAI, Depends(get_openai_client)],
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> IntakeAgent:
-    return IntakeAgent(repository, openai_client, settings)
+    llm: Annotated[ChatOpenAI, Depends(get_chat_model)],
+) -> IntakeAgentInterface:
+    return LangGraphIntakeAgent(repository, llm)
 
 
 def get_intake_service(
     call_service: Annotated[CallServiceInterface, Depends(get_call_service)],
-    agent: Annotated[IntakeAgent, Depends(get_intake_agent)],
-    application_service: Annotated[ApplicationServiceInterface, Depends(get_application_service)],
+    agent: Annotated[IntakeAgentInterface, Depends(get_intake_agent)],
+    case_service: Annotated[CaseServiceInterface, Depends(get_case_service)],
 ) -> IntakeServiceInterface:
-    return IntakeService(call_service, agent, application_service)
+    return IntakeService(call_service, agent, case_service)

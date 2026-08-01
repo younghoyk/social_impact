@@ -6,6 +6,5 @@ psycopg[binary]
 pgvector
 openai
 langgraph
+langchain-openai
 twilio
-streamlit
-requests
