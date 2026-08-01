@@ -1,6 +1,7 @@
 """범용 게시판 크롤러 — 지자체 홈페이지 CMS 구조가 제각각이라 CSS 셀렉터를 사이트별로
 하드코딩하지 않고, 링크 텍스트 키워드 매칭 + 본문 텍스트 추출로 범용 처리한다.
 구조 차이는 이후 LLM 추출 단계(llm_extractor.py)가 흡수한다."""
+import re
 from dataclasses import dataclass
 from urllib.parse import urljoin
 
@@ -32,13 +33,19 @@ def _fetch_html(url: str, timeout: float = 15.0) -> BeautifulSoup:
 
 
 _DETAIL_LINK_HINTS = ("view", "detail", "read", "nttno", "seq=", "no=", "idx=")
+_NUMERIC_PATH_SEGMENT = re.compile(r"/\d{3,}(?:[/?]|$)")  # 예: /bbs/b_068/156165?cp=1...
 
 
 def _looks_like_detail_link(href: str) -> bool:
-    """지자체 CMS는 목록/네비게이션(list.do, main.do)과 상세(view.do 등)를 href로 구분하는 경우가
-    대부분이라, 사이트 전체 메뉴에 있는 '노인복지' 같은 카테고리 링크(노이즈)를 걸러내기 위한 휴리스틱."""
+    """지자체 CMS는 목록/네비게이션(list.do, main.do)과 상세글을 href로 구분하는 경우가 대부분이라,
+    사이트 전체 메뉴에 있는 '노인복지' 같은 카테고리 링크(노이즈)를 걸러내기 위한 휴리스틱.
+    두 계열의 URL 패턴을 다룸:
+    - 쿼리파라미터형(이지웹 등): view.do?not_ancmt_mgt_no=123, ...?seq=123
+    - 경로형(강동구 등): /bbs/b_068/156165?cp=1..."""
     href_lower = href.lower()
-    return any(hint in href_lower for hint in _DETAIL_LINK_HINTS)
+    if any(hint in href_lower for hint in _DETAIL_LINK_HINTS):
+        return True
+    return bool(_NUMERIC_PATH_SEGMENT.search(href))
 
 
 def find_keyword_matched_links(list_url: str) -> list[NoticeCandidate]:

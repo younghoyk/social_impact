@@ -25,11 +25,11 @@ SITE_BOARDS: list[SiteBoard] = [
     SiteBoard("강남구", "district", ["1168"], "고시·공고", "https://www.gangnam.go.kr/notice/list.do?mid=ID05_040201"),
     SiteBoard("강남구보건소", "district", ["1168"], "보건소 고시/공고", "https://health.gangnam.go.kr/web/community/gosi.do"),
 
-    # 강동구 (district)
-    SiteBoard("강동구", "district", ["1174"], "고시·공고", "https://www.gangdong.go.kr/web/newportal/notice/01"),
+    # 강동구 (district) — /notice/01은 하위 게시판 54개로 흩어지는 메뉴 허브라 실제 공고가 없음.
+    # 어르신복지과 페이지엔 최근 글이 미리보기로 임베드되어 있어 이걸 사용 (실제 검증: 후보 11건 확인)
     SiteBoard(
-        "강동구", "district", ["1174"], "강동소식(복지소식 포함)",
-        "https://www.gangdong.go.kr/web/newportal/bbs/b_068/list?baCategory1=U0072",
+        "강동구", "district", ["1174"], "어르신복지과",
+        "https://www.gangdong.go.kr/web/newportal/office/EoReuSinCheongSoNyeonGwa",
     ),
 
     # 영등포구 (district)
